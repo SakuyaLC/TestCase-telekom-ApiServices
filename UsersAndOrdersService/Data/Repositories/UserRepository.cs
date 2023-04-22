@@ -1,4 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using UsersAndOrdersService.Data.Context;
@@ -101,17 +104,23 @@ namespace UsersAndOrdersService.Data.Repositories
             }
             return cipherText;
         }
-
-        public bool Authorize(string email, string password)
+        public async Task<bool> Authorize(string email, string password)
         {
             password = Encrypt(password);
 
-            if (_context.Users.Any(u => u.Email.Equals(email) && u.Password.Equals(password)))
+            if (await _context.Users.AnyAsync(u => u.Email.Equals(email) && u.Password.Equals(password)))
             {
                 return true;
             }
 
             return false;
         }
+
+        public async Task<User> GetUserByEmail(string email)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
+            return user;
+        }
+
     }
 }
