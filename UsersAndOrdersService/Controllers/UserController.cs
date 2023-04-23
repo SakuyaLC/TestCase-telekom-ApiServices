@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -9,12 +10,13 @@ using System.Text;
 using UsersAndOrdersService.Data.Context;
 using UsersAndOrdersService.Data.DTO;
 using UsersAndOrdersService.Data.Repositories;
+using UsersAndOrdersService.Helper;
 using UsersAndOrdersService.Model;
 
 namespace UsersAndOrdersService.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/users")]
     public class UserController : Controller
     {
         private readonly UserRepository _userRepository;
@@ -41,14 +43,14 @@ namespace UsersAndOrdersService.Controllers
         [HttpGet("/get-users")]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _userRepository.GetUsers();
+            var users = _mapper.Map<List<UserDTO>>(await _userRepository.GetUsers());
             return Ok(users);
         }
 
         [HttpGet("/get-user/{id}")]
         public async Task<IActionResult> GetSpecificUser(int id)
         {
-            var user = await _userRepository.GetSpecificUser(id);
+            var user = _mapper.Map<UserDTO>(await _userRepository.GetSpecificUser(id));
 
             if (user == null)
             {
@@ -59,33 +61,31 @@ namespace UsersAndOrdersService.Controllers
         }
 
         [HttpPost("/create-user")]
-        public async Task<IActionResult> CreateUser(User user)
+        public async Task<IActionResult> CreateUser(UserCreationDTO userCreationDTO)
         {
+            User user = _mapper.Map<User>(userCreationDTO);
+
             await _userRepository.CreateUser(user);
 
-            return CreatedAtAction(nameof(GetSpecificUser), new { id = user.Id }, user);
+            return CreatedAtAction(nameof(GetSpecificUser), new { id = user.Id }, _mapper.Map<UserDTO>(user));
         }
 
+        //[Authorize(Roles = "user, admin")]
         [HttpPatch("/update-user/{id}")]
-        public async Task<IActionResult> UpdateUser(int id, User user)
+        public async Task<IActionResult> UpdateUser(UserDTO user)
         {
-            if (id != user.Id)
-            {
-                return BadRequest();
-            }
 
-            var userExists = await _userRepository.UserExists(id);
-
-            if (!userExists)
+            if (!await _userRepository.UserExists(user.Id))
             {
                 return NotFound();
             }
 
-            await _userRepository.UpdateUser(user);
+            await _userRepository.UpdateUser(_mapper.Map<User>(user));
 
-            return Ok(user);
+            return Ok(_mapper.Map<UserDTO>(await _userRepository.GetSpecificUser(user.Id)));
         }
 
+        //[Authorize(Roles = "user, admin")]
         [HttpDelete("/delete-user/{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
@@ -121,20 +121,14 @@ namespace UsersAndOrdersService.Controllers
                 new Claim(ClaimTypes.Role, role)
             };
 
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(
-                _configuration.GetSection("JwtSettings:Key").Value));
+            var jwt = new JwtSecurityToken(
+                    issuer: AuthOptions.ISSUER,
+                    audience: AuthOptions.AUDIENCE,
+                    claims: claims,
+                    expires: DateTime.UtcNow.Add(TimeSpan.FromMinutes(5)), // время действия 5 минут
+                    signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
 
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
-                signingCredentials: creds);
-
-            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-            Console.WriteLine(jwt.ToString());
-
-            return jwt;
+            return new JwtSecurityTokenHandler().WriteToken(jwt);
         }
 
 

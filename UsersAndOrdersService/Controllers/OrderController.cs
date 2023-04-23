@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Data;
 using UsersAndOrdersService.Data.Context;
 using UsersAndOrdersService.Data.Repositories;
 using UsersAndOrdersService.Model;
@@ -6,7 +8,7 @@ using UsersAndOrdersService.Model;
 namespace UsersAndOrdersService.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/orders")]
     public class OrderController : Controller
     {
         private readonly OrderRepository _orderRepository;
@@ -16,6 +18,7 @@ namespace UsersAndOrdersService.Controllers
             _orderRepository = new OrderRepository(context);
         }
 
+        [Authorize(Roles = "user, admin")]
         [HttpGet("/get-orders")]
         public async Task<IActionResult> GetOrders()
         {
@@ -23,6 +26,7 @@ namespace UsersAndOrdersService.Controllers
             return Ok(orders);
         }
 
+        [Authorize(Roles = "user, admin")]
         [HttpGet("/get-order/{id}")]
         public async Task<IActionResult> GetSpecificOrder(int id)
         {
@@ -36,6 +40,7 @@ namespace UsersAndOrdersService.Controllers
             return Ok(order);
         }
 
+        [Authorize(Roles = "user, admin")]
         [HttpPost("/create-order")]
         public async Task<IActionResult> CreateOrder(Order order)
         {
@@ -44,6 +49,7 @@ namespace UsersAndOrdersService.Controllers
             return CreatedAtAction(nameof(GetSpecificOrder), new { id = order.Id }, order);
         }
 
+        [Authorize(Roles = "user, admin")]
         [HttpPatch("/update-order/{id}")]
         public async Task<IActionResult> UpdateOrder(int id, Order order)
         {
@@ -62,6 +68,7 @@ namespace UsersAndOrdersService.Controllers
             return Ok(updatedOrder);
         }
 
+        [Authorize(Roles = "user, admin")]
         [HttpDelete("/delete-order/{id}")]
         public async Task<IActionResult> DeleteOrder(int id)
         {

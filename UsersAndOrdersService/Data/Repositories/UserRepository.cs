@@ -118,7 +118,13 @@ namespace UsersAndOrdersService.Data.Repositories
 
         public async Task<User> GetUserByEmail(string email)
         {
+            if (!await _context.Users.AnyAsync(u => u.Email == email))
+            {
+                return null;
+            }
+
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
+
             return user;
         }
 
