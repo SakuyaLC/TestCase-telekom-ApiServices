@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SearchService.Helper;
+using SearchService.Model;
 
 namespace SearchService.Controllers
 {
@@ -16,7 +17,7 @@ namespace SearchService.Controllers
         }
 
         [HttpPost("/get-items")]
-        public IActionResult SearchItem()
+        public IActionResult SearchItem(ItemForSearch itemForSearch)
         {
             _rabbitMQService.SendMessage("get-items");
             return Ok();

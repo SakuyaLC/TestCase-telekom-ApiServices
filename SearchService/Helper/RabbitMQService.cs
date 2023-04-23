@@ -27,7 +27,7 @@ namespace SearchService.Helper
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                channel.QueueDeclare(queue: "MyQueue",
+                channel.QueueDeclare(queue: "SearchItem",
                                durable: false,
                                exclusive: false,
                                autoDelete: false,
@@ -36,7 +36,7 @@ namespace SearchService.Helper
                 var body = Encoding.UTF8.GetBytes(message);
 
                 channel.BasicPublish(exchange: "",
-                               routingKey: "MyQueue",
+                               routingKey: "SearchItem",
                                basicProperties: null,
                                body: body);
             }
