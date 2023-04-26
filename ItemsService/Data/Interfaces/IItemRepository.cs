@@ -12,5 +12,6 @@ namespace ItemsService.Data.Interfaces
         Task<bool> UpdateItem(Item item);
         Task<bool> DeleteItem(Item item);
         Task<bool> Save();
+        Task<ICollection<Item>> SearchItems(ItemForSearch itemForSearch);
     }
 }

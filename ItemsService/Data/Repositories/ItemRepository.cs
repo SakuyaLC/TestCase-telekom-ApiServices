@@ -52,5 +52,28 @@ namespace ItemsService.Data.Repositories
             return (await _context.SaveChangesAsync()) > 0;
         }
 
+        public async Task<ICollection<Item>> SearchItems(ItemForSearch itemForSearch)
+        {
+            var query = _context.Items.AsQueryable();
+
+            if (!string.IsNullOrEmpty(itemForSearch.Title))
+            {
+                query = query.Where(i => i.Title.Contains(itemForSearch.Title));
+            }
+
+            if (!string.IsNullOrEmpty(itemForSearch.Description))
+            {
+                query = query.Where(i => i.Description.Contains(itemForSearch.Description));
+            }
+
+            if (itemForSearch.Price != 0)
+            {
+                query = query.Where(i => i.Price == itemForSearch.Price);
+            }
+
+            var items = await query.ToListAsync();
+            return items;
+        }
+
     }
 }

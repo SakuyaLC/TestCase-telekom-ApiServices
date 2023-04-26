@@ -1,7 +1,9 @@
+using ItemsService.Controllers;
 using ItemsService.Data.Context;
 using ItemsService.Data.Interfaces;
 using ItemsService.Data.Repositories;
 using ItemsService.Data.Seeds;
+using ItemsService.Helper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddScoped<IRabbitMQService, RabbitMQService>();
 builder.Services.AddTransient<ItemSeed>();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -75,12 +79,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-public class AuthOptions
-{
-    public const string ISSUER = "MyAuthServer"; // издатель токена
-    public const string AUDIENCE = "MyAuthClient"; // потребитель токена
-    const string KEY = "mysupersecret_secretkey!123";   // ключ для шифрации
-    public static SymmetricSecurityKey GetSymmetricSecurityKey() =>
-        new SymmetricSecurityKey(Encoding.UTF8.GetBytes(KEY));
-}

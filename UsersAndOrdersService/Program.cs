@@ -39,6 +39,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddScoped<IRabbitMQService, RabbitMQService>();
 builder.Services.AddTransient<UsersAndOrdersSeed>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<IUserRepository, UserRepository>();

@@ -1,10 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using UsersAndOrdersService.Data.Context;
+using UsersAndOrdersService.Data.DTO;
 using UsersAndOrdersService.Data.Interfaces;
 using UsersAndOrdersService.Model;
 
@@ -13,10 +15,12 @@ namespace UsersAndOrdersService.Data.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly DataContext _context;
+        private readonly IMapper _mapper;
 
-        public UserRepository(DataContext context)
+        public UserRepository(DataContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         public async Task<bool> UserExists(int Id)
@@ -126,6 +130,24 @@ namespace UsersAndOrdersService.Data.Repositories
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
 
             return user;
+        }
+
+        public async Task<ICollection<UserDTO>> SearchUsers(UserForSearch userForSearch)
+        {
+            var query = _context.Users.AsQueryable();
+
+            if (!string.IsNullOrEmpty(userForSearch.Name))
+            {
+                query = query.Where(i => i.Name.Contains(userForSearch.Name));
+            }
+
+            if (!string.IsNullOrEmpty(userForSearch.Email))
+            {
+                query = query.Where(i => i.Email.Contains(userForSearch.Email));
+            }
+
+            var items = _mapper.Map<ICollection<UserDTO>>(await query.ToListAsync());
+            return items;
         }
 
     }

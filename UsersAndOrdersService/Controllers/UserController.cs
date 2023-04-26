@@ -9,6 +9,7 @@ using System.Security.Claims;
 using System.Text;
 using UsersAndOrdersService.Data.Context;
 using UsersAndOrdersService.Data.DTO;
+using UsersAndOrdersService.Data.Interfaces;
 using UsersAndOrdersService.Data.Repositories;
 using UsersAndOrdersService.Helper;
 using UsersAndOrdersService.Model;
@@ -19,15 +20,17 @@ namespace UsersAndOrdersService.Controllers
     [Route("api/users")]
     public class UserController : Controller
     {
-        private readonly UserRepository _userRepository;
+        private readonly IRabbitMQService _rabbitMQService;
+        private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
 
-        public UserController(DataContext context, IMapper mapper, IConfiguration configuration)
+        public UserController(DataContext context, IUserRepository userRepository, IMapper mapper, IConfiguration configuration, IRabbitMQService rabbitMQService)
         {
-            _userRepository = new UserRepository(context);
+            _userRepository = userRepository;
             _mapper = mapper;
             _configuration = configuration;
+            _rabbitMQService = rabbitMQService;
         }
 
         [HttpPost("/login")]
@@ -129,6 +132,18 @@ namespace UsersAndOrdersService.Controllers
                     signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
 
             return new JwtSecurityTokenHandler().WriteToken(jwt);
+        }
+
+        [HttpPost("/listen/user-search")]
+        public async Task<IActionResult> GetSearchUser()
+        {
+            var userForSearch = await _rabbitMQService.ReceiveSearchUser();
+
+            var users = await _userRepository.SearchUsers(userForSearch);
+
+            _rabbitMQService.SendMessage(users);
+
+            return Ok(users);
         }
 
 

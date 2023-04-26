@@ -16,11 +16,34 @@ namespace SearchService.Controllers
             _rabbitMQService = rabbitMQService;
         }
 
-        [HttpPost("/get-items")]
-        public IActionResult SearchItem(ItemForSearch itemForSearch)
+        [HttpPost("/search-item")]
+        public async Task<IActionResult> SearchItem([FromBody] ItemForSearch itemForSearch = null)
         {
-            _rabbitMQService.SendMessage("get-items");
-            return Ok();
+            if (itemForSearch == null)
+            {
+                return BadRequest();
+            }
+
+            _rabbitMQService.SendMessage(itemForSearch, "Item");
+
+            var itemsResult = await _rabbitMQService.RecieveItem();
+
+            return Ok(itemsResult);
+        }
+
+        [HttpPost("/search-user")]
+        public async Task<IActionResult> SearchUser([FromBody] UserForSearch userForSearch = null)
+        {
+            if (userForSearch == null)
+            {
+                return BadRequest();
+            }
+
+            _rabbitMQService.SendMessage(userForSearch, "User");
+
+            var userResult = await _rabbitMQService.RecieveUser();
+
+            return Ok(userResult);
         }
     }
 }

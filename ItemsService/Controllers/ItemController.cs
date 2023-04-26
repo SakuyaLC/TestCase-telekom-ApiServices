@@ -1,4 +1,5 @@
 ﻿using ItemsService.Data.Interfaces;
+using ItemsService.Helper;
 using ItemsService.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,11 +10,14 @@ namespace ItemsService.Controllers
     [Route("api/items")]
     public class ItemController : Controller
     {
+        private readonly IRabbitMQService _rabbitMQService;
+
         private readonly IItemRepository _repository;
 
-        public ItemController(IItemRepository repository)
+        public ItemController(IItemRepository repository, IRabbitMQService rabbitMQService)
         {
             _repository = repository;
+            _rabbitMQService = rabbitMQService;
         }
 
         [HttpGet("/get-items")]
@@ -86,6 +90,18 @@ namespace ItemsService.Controllers
             await _repository.DeleteItem(item);
 
             return NoContent();
+        }
+
+        [HttpPost("/listen/item-search")]
+        public async Task<IActionResult> GetSearchItem()
+        {
+            var itemForSearch = await _rabbitMQService.ReceiveSearchItem();
+
+            var items = await _repository.SearchItems(itemForSearch);
+
+            _rabbitMQService.SendMessage(items);
+
+            return Ok(items);
         }
     }
 }
