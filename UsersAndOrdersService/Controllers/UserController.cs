@@ -128,7 +128,7 @@ namespace UsersAndOrdersService.Controllers
                     issuer: AuthOptions.ISSUER,
                     audience: AuthOptions.AUDIENCE,
                     claims: claims,
-                    expires: DateTime.UtcNow.Add(TimeSpan.FromMinutes(5)), // время действия 5 минут
+                    expires: DateTime.UtcNow.Add(TimeSpan.FromMinutes(30)), // время действия 30 минут
                     signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
 
             return new JwtSecurityTokenHandler().WriteToken(jwt);
@@ -141,7 +141,19 @@ namespace UsersAndOrdersService.Controllers
 
             var users = await _userRepository.SearchUsers(userForSearch);
 
-            _rabbitMQService.SendMessage(users);
+            _rabbitMQService.SendMessage(users, "SearchUser");
+
+            return Ok(users);
+        }
+
+        [HttpPost("/user-orderHistory")]
+        public async Task<IActionResult> GetUserOrderHistory()
+        {
+            var userForSearch = await _rabbitMQService.ReceiveSearchUser();
+
+            var users = await _userRepository.SearchUsers(userForSearch);
+
+            _rabbitMQService.SendMessage(users, "SearchUser");
 
             return Ok(users);
         }

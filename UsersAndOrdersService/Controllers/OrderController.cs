@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using UsersAndOrdersService.Data.Context;
+using UsersAndOrdersService.Data.DTO;
+using UsersAndOrdersService.Data.Interfaces;
 using UsersAndOrdersService.Data.Repositories;
+using UsersAndOrdersService.Helper;
 using UsersAndOrdersService.Model;
 
 namespace UsersAndOrdersService.Controllers
@@ -11,11 +15,18 @@ namespace UsersAndOrdersService.Controllers
     [Route("api/orders")]
     public class OrderController : Controller
     {
-        private readonly OrderRepository _orderRepository;
+        private readonly IOrderRepository _orderRepository;
+        private readonly IOrderedItemsRepository _orderedItemsRepository;
+        private readonly IRabbitMQService _rabbitMQService;
+        private readonly IMapper _mapper;
 
-        public OrderController(DataContext context)
+        public OrderController(DataContext context, IOrderRepository orderRepository, IOrderedItemsRepository orderedItemsRepository, IRabbitMQService rabbitMQService, IMapper mapper)
         {
-            _orderRepository = new OrderRepository(context);
+            _orderRepository = orderRepository;
+            _orderedItemsRepository = orderedItemsRepository;
+            _rabbitMQService = rabbitMQService;
+            _mapper = mapper;
+
         }
 
         [Authorize(Roles = "user, admin")]
@@ -82,6 +93,20 @@ namespace UsersAndOrdersService.Controllers
             await _orderRepository.DeleteOrder(order);
 
             return NoContent();
+        }
+
+        [HttpGet("/get-orderInfo")]
+        public async Task<IActionResult> GetOrderInfo(int id)
+        {
+            if (!await _orderRepository.OrderExists(id))
+            {
+                return NotFound();
+            }
+
+            var order = await _orderRepository.GetSpecificOrder(id);
+            order.OrderedItems = await _orderedItemsRepository.GetOrderedItemsForOrder(order.Id);
+
+            return Ok(_mapper.Map<OrderInfoDTO>(order));
         }
     }
 }

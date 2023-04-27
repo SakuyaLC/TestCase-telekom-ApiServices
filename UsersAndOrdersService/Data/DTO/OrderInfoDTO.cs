@@ -1,19 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using UsersAndOrdersService.Model;
 
-namespace UsersAndOrdersService.Model
+namespace UsersAndOrdersService.Data.DTO
 {
-    [Table("Orders")]
-    public class Order
+    public class OrderInfoDTO
     {
         [Required]
         [Key]
         public int Id { get; set; }
         public int UserId { get; set; }
-        public User User { get; set; }
         public DateTime DateTime { get; set; }
-        public ICollection<OrderedItem> OrderedItems { get; set; }
+        [JsonPropertyName("OrderedItems")]
+        public ICollection<OrderedItemDTO> OrderedItems { get; set; }
     }
 }

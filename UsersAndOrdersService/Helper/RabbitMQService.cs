@@ -18,13 +18,13 @@ namespace UsersAndOrdersService.Helper
             _mapper = mapper;
         }
 
-        public void SendMessage(object obj)
+        public void SendMessage(object obj, string type)
         {
             var message = JsonSerializer.Serialize(obj);
-            SendMessage(message);
+            SendMessage(message, type);
         }
 
-        public void SendMessage(string message)
+        public void SendMessage(string message, string type)
         {
             var factory = new ConnectionFactory()
             {
@@ -36,21 +36,23 @@ namespace UsersAndOrdersService.Helper
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
+                if (type.Equals("SearchUser"))
+                {
+                    channel.QueueDeclare(queue: "SearchUser",
+                    durable: false,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null);
 
-                channel.QueueDeclare(queue: "SearchUser",
-                durable: false,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null);
+                    var body = Encoding.UTF8.GetBytes(message);
 
-                var body = Encoding.UTF8.GetBytes(message);
+                    channel.BasicPublish(exchange: "",
+                                   routingKey: "SearchUser",
+                                   basicProperties: null,
+                                   body: body);
 
-                channel.BasicPublish(exchange: "",
-                               routingKey: "SearchUser",
-                               basicProperties: null,
-                               body: body);
-
-                Console.WriteLine("Sent message: {0}", message);
+                    Console.WriteLine("Sent message: {0}", message);
+                }
 
             }
         }

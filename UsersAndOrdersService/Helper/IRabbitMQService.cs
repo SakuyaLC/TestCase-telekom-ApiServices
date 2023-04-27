@@ -5,8 +5,8 @@ namespace UsersAndOrdersService.Helper
 {
     public interface IRabbitMQService
     {
-        void SendMessage(object obj);
-        void SendMessage(string message);
+        void SendMessage(object obj, string type);
+        void SendMessage(string message, string type);
         Task<UserForSearch> ReceiveSearchUser();
     }
 }
