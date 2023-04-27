@@ -29,15 +29,15 @@ namespace UsersAndOrdersService.Controllers
 
         }
 
-        [Authorize(Roles = "user, admin")]
+        //[Authorize(Roles = "user, admin")]
         [HttpGet("/get-orders")]
         public async Task<IActionResult> GetOrders()
         {
             var orders = await _orderRepository.GetOrders();
-            return Ok(orders);
+            return Ok(_mapper.Map<List<OrderDTO>>(orders));
         }
 
-        [Authorize(Roles = "user, admin")]
+        //[Authorize(Roles = "user, admin")]
         [HttpGet("/get-order/{id}")]
         public async Task<IActionResult> GetSpecificOrder(int id)
         {
@@ -48,21 +48,23 @@ namespace UsersAndOrdersService.Controllers
                 return NotFound();
             }
 
-            return Ok(order);
+            return Ok(_mapper.Map<OrderDTO>(order));
         }
 
-        [Authorize(Roles = "user, admin")]
+        //[Authorize(Roles = "user, admin")]
         [HttpPost("/create-order")]
-        public async Task<IActionResult> CreateOrder(Order order)
+        public async Task<IActionResult> CreateOrder(OrderDTO order)
         {
-            await _orderRepository.CreateOrder(order);
+            await _orderRepository.CreateOrder(_mapper.Map<Order>(order));
 
-            return CreatedAtAction(nameof(GetSpecificOrder), new { id = order.Id }, order);
+            var orderDTO = CreatedAtAction(nameof(GetSpecificOrder), new { id = order.Id }, order);
+
+            return Ok(_mapper.Map<OrderDTO>(orderDTO));
         }
 
-        [Authorize(Roles = "user, admin")]
+        //[Authorize(Roles = "user, admin")]
         [HttpPatch("/update-order/{id}")]
-        public async Task<IActionResult> UpdateOrder(int id, Order order)
+        public async Task<IActionResult> UpdateOrder(int id, OrderDTO order)
         {
             if (id != order.Id)
             {
@@ -74,12 +76,12 @@ namespace UsersAndOrdersService.Controllers
                 return NotFound();
             }
 
-            var updatedOrder = await _orderRepository.GetSpecificOrder(id);
+            var updatedOrder = _mapper.Map<OrderDTO>(await _orderRepository.GetSpecificOrder(id));
 
             return Ok(updatedOrder);
         }
 
-        [Authorize(Roles = "user, admin")]
+        //[Authorize(Roles = "user, admin")]
         [HttpDelete("/delete-order/{id}")]
         public async Task<IActionResult> DeleteOrder(int id)
         {
@@ -95,6 +97,7 @@ namespace UsersAndOrdersService.Controllers
             return NoContent();
         }
 
+        //[Authorize(Roles = "user, admin")]
         [HttpGet("/get-orderInfo")]
         public async Task<IActionResult> GetOrderInfo(int id)
         {

@@ -20,6 +20,9 @@ namespace UsersAndOrdersService.Helper
             CreateMap<OrderedItem, OrderedItemDTO>();
             CreateMap<OrderedItemDTO, OrderedItem>();
 
+            CreateMap<Order, OrderDTO>();
+            CreateMap<OrderDTO, Order>();
+
             CreateMap<Order, OrderInfoDTO>();
             CreateMap<OrderInfoDTO, Order>();
         }
